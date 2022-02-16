@@ -68,22 +68,17 @@ class GaussianNoiseCalculator(BaseCalculator):
         self.input_path = input_path
 
     def backengine(self):
-        """Method to do the actual calculation."""
-        diffr_data = DD.read(
-            self.input_path, self.parameters.index, **self.parameters.read_args
-        )
-        diffr_data.addGaussianNoise(self.parameters.mu, self.parameters.sigs_popt)
-        print("Convert back to nphotons...", flush=True)
-        chunk_size = self.parameters.chunk_size
-        diffr_data.multiply(1 / self.parameters.mu, chunk_size)
-        print("Get round values...", flush=True)
-        for arr in tqdm(
-            spliterate(diffr_data.array, chunk_size),
-            total=int(np.ceil(float(len(diffr_data.array)) / chunk_size)),
-        ):
-            arr[:] = np.round(arr)
-            arr[arr < 0] = 0
-        diffr_data.setArrayDataType("i4")
+        """ Method to do the actual calculation."""
+        diffr_data = DD.read(self.input_path,
+                             self.parameters.index,
+                             **self.parameters.read_args)
+        diffr_data.addGaussianNoise(self.parameters.mu,
+                                    self.parameters.sigs_popt)
+        diffr_data.multiply(1 / self.parameters.mu)
+        for i in tqdm(range(len(diffr_data.array))):
+            diffr_data.array[i] = np.round(diffr_data.array[i])
+        diffr_data.array[diffr_data.array < 0] = 0
+        diffr_data.setArrayDataType('i4')
         self._set_data(diffr_data)
         return 0
 
